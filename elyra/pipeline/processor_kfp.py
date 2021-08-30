@@ -98,6 +98,8 @@ class KfpPipelineProcessor(RuntimePipelineProcessor):
         api_password = runtime_configuration.metadata.get('api_password')
 
         engine = runtime_configuration.metadata.get('engine')
+        if engine == 'Tekton' and not TektonClient:
+            raise ValueError('kfp-tekton not installed. Please install using elyra[kfp-tekton] to use Tekton engine.')
 
         pipeline_name = pipeline.name
         try:
@@ -294,6 +296,9 @@ class KfpPipelineProcessor(RuntimePipelineProcessor):
         cos_secret = runtime_configuration.metadata.get('cos_secret')
         kf_secured = runtime_configuration.metadata.get('api_username') is not None and \
             runtime_configuration.metadata.get('api_password') is not None
+        
+        if engine == 'Tekton' and not TektonClient:
+            raise ValueError('kfp-tekton not installed. Please install using elyra[kfp-tekton] to use Tekton engine.')
 
         if os.path.exists(absolute_pipeline_export_path) and not overwrite:
             raise ValueError("File " + absolute_pipeline_export_path + " already exists.")
@@ -308,7 +313,7 @@ class KfpPipelineProcessor(RuntimePipelineProcessor):
                 pipeline_function = lambda: self._cc_pipeline(pipeline,
                                                               pipeline_name,
                                                               cos_directory=cos_directory)  # nopep8
-                if engine == 'Tekton':
+                if 'Tekton' == engine:                        
                     self.log.info("Compiling pipeline for Tekton engine")
                     kfp_tekton_compiler.TektonCompiler().compile(pipeline_function, absolute_pipeline_export_path)
                 else:
